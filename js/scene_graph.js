@@ -68,9 +68,8 @@ function createSceneGraphModule() {
          */
         notify: function() {
             _.each(this.listeners, function(listener) {
-                // TODO
-                // find what format the listener needs to be in
-                listener.placeholderMethod();
+                // The view will be the primary listener to each graph node, hence we call its update function when this model changes
+                listener.update();
             });
         },
 
@@ -79,8 +78,7 @@ function createSceneGraphModule() {
          * @param listener: Object that listens for the change of the node.
          */
         addListener: function(listener) {
-            //TODO
-            if (_.indexOf(this.listeners, node) == -1) {
+            if (_.indexOf(this.listeners, listener) == -1) {
                 this.listeners.push(listener);
             }
         },
@@ -90,7 +88,6 @@ function createSceneGraphModule() {
          * @param listener: Listener that is registered with this node. 
          */
         removeListener: function(listener) {
-            //TODO
             this.listeners = _.without(this.listeners, listener);
         },
 
@@ -120,7 +117,6 @@ function createSceneGraphModule() {
          * @param node: Child node to be removed.
          */
         removeChild: function(node) {
-            //TODO
             if (_.indexOf(this.children, node) >= 0) {
                 this.children = _.without(this.children, node);
             }
@@ -147,14 +143,22 @@ function createSceneGraphModule() {
          * with this node's local transformation.
          */
         updateGlobalTransformation: function() {
-            //TODO
+            if (this.id == 'scene') { 
+                this.globalTransformation.concatenate(this.localTransformation);
+            } else {
+                var parentTransform = _.clone(this.parent.globalTransformation);
+                this.localTransformation.concatenate(parentTransform);
+            }
         },
 
         /**
          * Update the global transformations of this node and its descendants recursively.
          */
         updateAllGlobalTransformation: function() {
-            //TODO
+            this.updateGlobalTransformation();
+            _.each(this.children, function(child) {
+                child.updateGlobalTransformation();
+            });
         },
 
         /**
@@ -162,7 +166,7 @@ function createSceneGraphModule() {
          * @param context: Context obtained from HTML5 Canvas.
          */
         renderLocal: function(context) {
-            //TODO     
+            this.applyTransformationToContext(context, this.globalTransformation);
         },
 
         /**
@@ -177,7 +181,12 @@ function createSceneGraphModule() {
          * @param context: Context obtained from HTML Canvas.
          */
         renderAll: function(context) {
-            //TODO
+            context.save();
+            this.applyTransformationToContext(context, this.localTransformation);
+            _.each(this.children, function(child) {
+                child.renderAll();
+            });
+            context.restore();
         },
 
         /**
@@ -205,7 +214,9 @@ function createSceneGraphModule() {
          * @param x, y: Centre of Rotation.
          */
         rotate: function(theta, x, y) {
-            //TODO
+            this.localTransformation.rotate(theta, x, y);
+            this.updateAllGlobalTransformation();
+            this.notify();
         },
 
         /**
@@ -220,7 +231,9 @@ function createSceneGraphModule() {
          * @param dy: Distance to translate in the y direction from the node's coordinate system.
          */
         translate: function(dx, dy) {
-            //TODO
+            this.localTransformation.translate(dx, dy);
+            this.updateAllGlobalTransformation();
+            this.notify();
         },
 
         /**
@@ -239,7 +252,11 @@ function createSceneGraphModule() {
          * @param sy: Scaling factor in the y direction from the node's coordinate system.
          */
         scale: function(sx, sy) {
-            //TODO
+            this.localTransformation.scale(dx, dy);
+            this.updateAllGlobalTransformation();
+            //  TODO
+            //  scale the bouding box, and update its rendering dimensions
+            this.notify();          
         },
 
 
@@ -264,7 +281,26 @@ function createSceneGraphModule() {
           *         point is in the local bounding box, otherwise false.
           */
         performHitDetection: function(point) {
-            //TODO
+            if (!this.isInteractableWithMouse) {
+                return false;
+            }
+
+            var p = _.clone(point);
+            // create inverse matrix and transform the point
+            var inverseGlobal = this.globalTransformation.createInverse();
+            inverseGlobal.transform(point, 0, 0, 1);
+
+            var x = p[0],
+                y = p[1];
+
+            if ( this.localBoundingBox['x'] < x  
+                && x < this.localBoundingBox['x'] + this.localBoundingBox['w']
+                && this.localBoundingBox['y'] < y
+                && y < this.localBoundingBox['y'] + this.localBoundingBox['h']) {
+                return true;
+            } else {
+                return false;
+            }
         }
     });
 
@@ -365,10 +401,20 @@ function createSceneGraphModule() {
      */
     var TailNode = function() {
         GraphNode.apply(this, arguments);
+
+        this.localBoundingBox = {
+            x: -80,
+            y: -80,
+            w: 80,
+            h: 80
+        };
     }
     _.extend(TailNode.prototype, GraphNode.prototype, {
         renderLocal: function(context) {
             //TODO
+
+            context.fillStyle = "rgb(100, 200, 0)";
+            context.fillRect(-80, -80, 80, 80);
         }
     });
 
@@ -379,10 +425,22 @@ function createSceneGraphModule() {
      */
     var FireNode = function() {
         GraphNode.apply(this, arguments);
+
+        this.localBoundingBox = {
+            x: -90,
+            y: -90,
+            w: 100,
+            h: 100
+        };
+
     }
     _.extend(FireNode.prototype, GraphNode.prototype, {
         renderLocal: function(context) {
             //TODO
+
+            context.fillStyle = "rgb(100, 200, 0)";
+            context.fillRect(-90, -90, 100, 100);
+
         }
     });
 
@@ -393,10 +451,21 @@ function createSceneGraphModule() {
      */ 
     var BodyNode = function() {
         GraphNode.apply(this, arguments);
+
+
+        this.localBoundingBox = {
+            x: -31,
+            y: -31,
+            w: 49,
+            h: 49
+        };
     }
     _.extend(BodyNode.prototype, GraphNode.prototype, {
         renderLocal: function(context) {
             //TODO
+
+            context.fillStyle = "rgb(100, 200, 0)";
+            context.fillRect(-31, -31, 49, 49);
         }
     });
 
@@ -407,10 +476,20 @@ function createSceneGraphModule() {
      */ 
     var HandleNode = function() {
         GraphNode.apply(this, arguments);
+
+        this.localBoundingBox = {
+            x: -61,
+            y: -61,
+            w: 20,
+            h: 20
+        };
     }
     _.extend(HandleNode.prototype, GraphNode.prototype, {
         renderLocal: function(context) {
             //TODO
+
+            context.fillStyle = "rgb(100, 200, 0)";
+            context.fillRect(-61, -61, 20, 20);
         }
     });
 
