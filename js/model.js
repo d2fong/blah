@@ -29,8 +29,14 @@ function createModelModule() {
     this.headNode = new sceneGraphModule.HeadNode('head', this.spaceshipNode);
     this.headNode.translate(0, -80);
 
-    //TODO
+    this.bodyNode = new sceneGraphModule.BodyNode('body', this.spaceshipNode);
+    this.bodyNode.translate(0, -81);
 
+    this.handleNode = new sceneGraphModule.TailNode('tail', this.bodyNode);
+    this.handleNode.translate(0, -120);
+
+    this.fireNode = new sceneGraphModule.FireNode('fire', this.tailNode);
+    this.fireNode.translate(0, -200);
 
     /**
      * Push every node into the the nodes list.
@@ -38,6 +44,11 @@ function createModelModule() {
     this.nodes.push(this.headNode);
     this.nodes.push(this.spaceshipNode);
     this.nodes.push(this.rootNode);
+
+    this.nodes.push(this.bodyNode);
+    this.nodes.push(this.handleNode);
+    this.nodes.push(this.tailNode);
+    this.nodes.push(this.fireNode);
     
     //TODO
   };
