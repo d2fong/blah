@@ -36,9 +36,6 @@ function createSceneGraphModule() {
 
         // If a valid parent is passed in, save the parent to this node, then add this node to the parent.
         this.parent = typeof parent !== 'undefined' ? parent : null;
-        if (parent) {
-            parent.addChild(this);
-        }
 
         // Maintain a list of child nodes.
         this.children = [];
@@ -100,16 +97,11 @@ function createSceneGraphModule() {
          * @param node: Child node to be added.
          */
         addChild: function(node) {
-            if ( !_.isEmpty(_.where(this.children, node))) {
-                if (node.parent != this.self) {
-                    node.parent = this.self;
-                }
+            if (!_.contains(this.children, node)) {
+                node.parent = this;
+                node.updateAllGlobalTransformation();
                 this.children.push(node);
             }
-
-            // TODO
-            // recursively update the global transformations of its descendants, as they are
-            // appended to a new parent
         },
 
         /**
@@ -183,8 +175,9 @@ function createSceneGraphModule() {
         renderAll: function(context) {
             context.save();
             this.applyTransformationToContext(context, this.localTransformation);
+            this.renderLocal(context);
             _.each(this.children, function(child) {
-                child.renderAll();
+                child.renderAll(context);
             });
             context.restore();
         },
@@ -316,8 +309,8 @@ function createSceneGraphModule() {
         this.localBoundingBox = {
             x: 0,
             y: 0,
-            w: 600,
-            h: 800
+            w: 800,
+            h: 600
         };
     }
 
@@ -349,12 +342,13 @@ function createSceneGraphModule() {
         // Override the renderLocal function to draw itself in its own coordinate system.
         renderLocal: function(context) {
 
-            // TODO
-
             // You might want to modify this.
-            context.fillStyle = "rgb(200, 0, 0)";
-            context.fillRect(-50, -50, 100, 100);
-
+            context.fillStyle = "white";
+            context.rect(-40, -210, 130, 450);
+            context.fill();
+            // context.lineWidth = 3;
+            // context.strokeStyle = 'black';
+            // context.stroke();
             
         }
     });
@@ -368,7 +362,6 @@ function createSceneGraphModule() {
         // Inherit the constructor of GraphNode.
         GraphNode.apply(this, arguments);
 
-        // TODO
 
         // Override the local bounding box of this node, you might want to modify this.
         this.localBoundingBox = {
@@ -384,11 +377,24 @@ function createSceneGraphModule() {
         // Override the renderLocal function to draw itself in its own coordinate system.
         renderLocal: function(context) {
 
-            //TODO
-
             // You might want to modify this.
-            context.fillStyle = "rgb(100, 200, 0)";
-            context.fillRect(-30, -30, 60, 60);
+            context.lineWidth = 3;
+
+
+            context.beginPath();
+            context.moveTo(25, -100);
+            context.lineTo(-5, -50);
+            context.strokeStyle = 'black';
+            context.stroke();
+            context.lineTo(55,-50);
+            context.strokeStyle = 'black';
+            context.stroke();
+            context.closePath();
+            context.strokeStyle = 'black';
+            context.stroke();
+            context.fillStyle = "#blue";
+            context.fill();
+
 
         }
     });
@@ -411,10 +417,26 @@ function createSceneGraphModule() {
     }
     _.extend(TailNode.prototype, GraphNode.prototype, {
         renderLocal: function(context) {
-            //TODO
 
-            context.fillStyle = "rgb(100, 200, 0)";
-            context.fillRect(-80, -80, 80, 80);
+            context.fillStyle = "#FFF1DB";
+            context.lineWidth = 3;
+
+
+            context.beginPath();
+            context.moveTo(25, 282);
+            context.strokeStyle = 'black';
+            context.stroke();
+            context.lineTo(-15, 330);
+            context.strokeStyle = 'black';
+            context.stroke();
+            context.lineTo(65, 330);
+            context.strokeStyle = 'black';
+            context.stroke();
+            context.closePath();
+            context.strokeStyle = 'black';
+            context.stroke();
+            context.fillStyle = "#FFF1DB";
+            context.fill();
         }
     });
 
@@ -433,15 +455,21 @@ function createSceneGraphModule() {
             h: 100
         };
 
+        this.fireOn = false;
+
     }
     _.extend(FireNode.prototype, GraphNode.prototype, {
         renderLocal: function(context) {
             //TODO
 
-            context.fillStyle = "rgb(100, 200, 0)";
-            context.fillRect(-90, -90, 100, 100);
+            if (this.fireOn) { 
+                context.fillStyle = "#B30B16";
+                context.fillRect(-10, 565, 20, 60);
+                context.fillRect( 15, 565, 20, 60);
+                context.fillRect( 40, 565, 20, 60);
+            } 
 
-        }
+        },
     });
 
 
@@ -462,15 +490,19 @@ function createSceneGraphModule() {
     }
     _.extend(BodyNode.prototype, GraphNode.prototype, {
         renderLocal: function(context) {
-            //TODO
 
-            context.fillStyle = "rgb(100, 200, 0)";
-            context.fillRect(-31, -31, 49, 49);
+            context.fillStyle = "#FFE2C4";
+            context.rect(-5, -49, 60, 230);
+            context.fill();
+            context.lineWidth = 3;
+            context.strokeStyle = 'black';
+            context.stroke();
+
         }
     });
 
 
-
+// 
     /**
      * HandleNode is a child of the body node, representing the resizing handle of the spaceship.
      */ 
@@ -486,10 +518,9 @@ function createSceneGraphModule() {
     }
     _.extend(HandleNode.prototype, GraphNode.prototype, {
         renderLocal: function(context) {
-            //TODO
 
-            context.fillStyle = "rgb(100, 200, 0)";
-            context.fillRect(-61, -61, 20, 20);
+            context.fillStyle = "#000000";
+            context.fillRect(-5, 31, 60, 10);
         }
     });
 
@@ -497,7 +528,7 @@ function createSceneGraphModule() {
     // Return an object containing all of our classes and constants
     return {
         RootNode: RootNode,
-        SpaceshipNode, SpaceshipNode,
+        SpaceshipNode: SpaceshipNode,
         HeadNode: HeadNode,
         TailNode: TailNode,
         FireNode: FireNode,

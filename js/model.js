@@ -32,11 +32,26 @@ function createModelModule() {
     this.bodyNode = new sceneGraphModule.BodyNode('body', this.spaceshipNode);
     this.bodyNode.translate(0, -81);
 
-    this.handleNode = new sceneGraphModule.TailNode('tail', this.bodyNode);
-    this.handleNode.translate(0, -120);
+    this.handleNode = new sceneGraphModule.HandleNode('handle', this.bodyNode);
+    this.handleNode.translate(0, -81);
+
+    this.tailNode = new sceneGraphModule.TailNode('tail', this.spaceshipNode);
+    this.tailNode.translate(0, -181);
 
     this.fireNode = new sceneGraphModule.FireNode('fire', this.tailNode);
-    this.fireNode.translate(0, -200);
+    this.fireNode.translate(0, -230);
+
+
+    // set up child parent binding
+
+    this.rootNode.addChild(this.spaceshipNode);
+    this.spaceshipNode.addChild(this.headNode);
+    this.spaceshipNode.addChild(this.bodyNode);
+    this.spaceshipNode.addChild(this.tailNode);
+
+    this.bodyNode.addChild(this.handleNode);
+    this.tailNode.addChild(this.fireNode);
+
 
     /**
      * Push every node into the the nodes list.
@@ -49,8 +64,6 @@ function createModelModule() {
     this.nodes.push(this.handleNode);
     this.nodes.push(this.tailNode);
     this.nodes.push(this.fireNode);
-    
-    //TODO
   };
 
   _.extend(SpaceshipModel.prototype, {
