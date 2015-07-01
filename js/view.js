@@ -80,22 +80,29 @@ function createViewModule() {
       if (e.keyCode == '38') {
           // up arrow
           self.model.fireNode.fireOn = true;
-          self.model.rootNode.translate(0, -1);
+          self.model.spaceshipNode.translate(0, -10);
+          self.update();
       }
       else if (e.keyCode == '40') {
           // down arrow
       }
       else if (e.keyCode == '37') {
          // left arrow
-         self.model.tailNode.translate(-10, -10);
-         self.model.tailNode.rotate(0.1, 0.1, 0.1);
-      }
-      else if (e.keyCode == '39') {
-         // right arrow
-         self.model.tailNode.rotate(-0.1, 0.1, 0.1);
-      } else {
+         var thetaIncrement = 3*Math.PI/180;
+             rotatePoint = self.model.tailNode.getTip();
 
+         if (self.model.tailNode.rotationAllowed(thetaIncrement)) {
+            self.model.tailNode.rotate(thetaIncrement, rotatePoint['x'], rotatePoint['y']);
+         }
       }
+      if (e.keyCode == '39') {
+         // right arrow
+         var thetaDecrement = -3*Math.PI/180,
+             rotatePoint = self.model.tailNode.getTip();
+         if (self.model.tailNode.rotationAllowed(thetaDecrement)) {
+            self.model.tailNode.rotate(thetaDecrement, rotatePoint['x'], rotatePoint['y']);
+         }
+      } 
     });
 
     /**

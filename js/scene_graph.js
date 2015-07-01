@@ -158,7 +158,7 @@ function createSceneGraphModule() {
          * @param context: Context obtained from HTML5 Canvas.
          */
         renderLocal: function(context) {
-            this.applyTransformationToContext(context, this.globalTransformation);
+            // this.applyTransformationToContext(context, this.globalTransformation);
         },
 
         /**
@@ -330,10 +330,10 @@ function createSceneGraphModule() {
 
         // Override the local bounding box of this node. You might want to modify this.
         this.localBoundingBox = {
-            x: -50,
-            y: -50,
-            w: 100,
-            h: 100
+            x: -40,
+            y: -210,
+            w: 130,
+            h: 450
         };
     }
 
@@ -341,15 +341,11 @@ function createSceneGraphModule() {
     _.extend(SpaceshipNode.prototype, GraphNode.prototype, {
         // Override the renderLocal function to draw itself in its own coordinate system.
         renderLocal: function(context) {
-
             // You might want to modify this.
+            var dim = this.localBoundingBox;
             context.fillStyle = "white";
-            context.rect(-40, -210, 130, 450);
+            context.rect(dim['x'], dim['y'], dim['w'], dim['h']);
             context.fill();
-            // context.lineWidth = 3;
-            // context.strokeStyle = 'black';
-            // context.stroke();
-            
         }
     });
 
@@ -365,10 +361,10 @@ function createSceneGraphModule() {
 
         // Override the local bounding box of this node, you might want to modify this.
         this.localBoundingBox = {
-            x: -30,
-            y: -30,
+            x: -5,
+            y: -100,
             w: 60,
-            h: 60
+            h: 50,
         };
     }
 
@@ -409,13 +405,19 @@ function createSceneGraphModule() {
         GraphNode.apply(this, arguments);
 
         this.localBoundingBox = {
-            x: -80,
-            y: -80,
+            x: -15,
+            y: 282,
             w: 80,
-            h: 80
+            h: 50
         };
+        this.currAngle = 0;
+        this.maxAngle = 45;
     }
     _.extend(TailNode.prototype, GraphNode.prototype, {
+        getTip: function() { 
+            var dim = this.localBoundingBox;
+            return {x: (dim['x'] + (dim['w']/2)), y: dim['y']}
+        },
         renderLocal: function(context) {
 
             context.fillStyle = "#FFF1DB";
@@ -437,6 +439,31 @@ function createSceneGraphModule() {
             context.stroke();
             context.fillStyle = "#FFF1DB";
             context.fill();
+        },
+        rotationAllowed: function(theta) {
+            var incOrDec = theta/(Math.PI/180);
+
+            if (this.currAngle > this.maxAngle) {
+                if (incOrDec < 0) {
+                    this.currAngle += incOrDec;
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+
+            if (this.currAngle < -this.maxAngle) {
+                if (incOrDec > 0) {
+                    this.currAngle += incOrDec;
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+
+            this.currAngle += incOrDec;
+            return true;
+
         }
     });
 
