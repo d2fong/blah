@@ -48,6 +48,22 @@ function createViewModule() {
     this.model.handleNode.addListener(this);
     this.model.tailNode.addListener(this);
     this.model.fireNode.addListener(this);
+
+    this.getPos = function getPos(el, position) {
+        if (!position) {
+            position = {
+                x: 0,
+                y: 0
+            };
+        }
+        position.x += el.offsetLeft;
+        position.y += el.offsetTop;
+        if (el.offsetParent) {
+            return getPos(el.offsetParent, position);
+        } else {
+            return position;
+        }
+    }
     
     /**
      * Handle mousedown events.
@@ -55,6 +71,22 @@ function createViewModule() {
      */ 
     canvas.addEventListener('mousedown', function(e) {
       //TODO
+      var p1 = self.getPos(self.canvas);
+
+      var point = [];
+      point[0] = e.clientX - p1['x'] - 400 + self.model.spaceshipNode.localBoundingBox['x'];
+      point[1] = e.clientY - p1['y'] + self.model.spaceshipNode.localBoundingBox['y'];
+
+      var node = self.model.performHitDetection(point);
+
+      if (node) { 
+        if (node.id == 'bodyNode') {
+          console.log('hit');
+        }
+      } else {
+        console.log('not-hit');
+      }
+
     });
 
     /**
@@ -72,6 +104,10 @@ function createViewModule() {
       //TODO
     });
 
+
+
+    var powerUpTimer = null;
+
     /**
      * Handle keydown events.
      */ 
@@ -80,7 +116,15 @@ function createViewModule() {
       if (e.keyCode == '38') {
           // up arrow
           self.model.fireNode.fireOn = true;
-          self.model.spaceshipNode.translate(0, -10);
+          self.model.spaceshipNode.translate(0, -self.model.spaceshipNode.velocity);
+          var angle = self.model.tailNode.currAngle;
+          if (angle != 0) {
+            var thetaIncrement = 0.1*angle*Math.PI/180;
+            rotatePoint = self.model.tailNode.getTip();
+
+            self.model.spaceshipNode.rotate(-thetaIncrement, rotatePoint['x'], rotatePoint['y']);
+          }
+          self.model.spaceshipNode.updateLocation(-thetaIncrement*10, -self.model.spaceshipNode.velocity);
           self.update();
       }
       else if (e.keyCode == '40') {
@@ -102,6 +146,12 @@ function createViewModule() {
          if (self.model.tailNode.rotationAllowed(thetaDecrement)) {
             self.model.tailNode.rotate(thetaDecrement, rotatePoint['x'], rotatePoint['y']);
          }
+      }
+
+      if (e.keyCode == '32') {
+        if (powerUpTimer == null) {
+          powerUpTimer = e.timeStamp;
+        }
       } 
     });
 
@@ -125,6 +175,14 @@ function createViewModule() {
            // right arrow
         } else {
 
+        }
+        if (e.keyCode == '32') {
+          var powerUpTimerEnd = e.timeStamp - powerUpTimer;
+
+          if (powerUpTimerEnd >= 5000) {
+            self.model.spaceshipNode.scale(2, 2);
+
+          }
         }
 
 

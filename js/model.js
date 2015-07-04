@@ -79,6 +79,7 @@ function createModelModule() {
           return node;
         }
       });
+
       if (result) {
         return result;
       } 

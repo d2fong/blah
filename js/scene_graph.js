@@ -50,6 +50,8 @@ function createSceneGraphModule() {
             h: 0
         };
 
+        this.velocity = 10;
+
         // Indicate whether this node is interactable with a mouse. If it is not interactable with 
         // mouse at all, we do not need to perform a hit detection on it.
         this.isInteractableWithMouse = false;
@@ -245,14 +247,27 @@ function createSceneGraphModule() {
          * @param sy: Scaling factor in the y direction from the node's coordinate system.
          */
         scale: function(sx, sy) {
-            this.localTransformation.scale(dx, dy);
+            this.localTransformation.scale(sx, sy);
             this.updateAllGlobalTransformation();
             //  TODO
             //  scale the bouding box, and update its rendering dimensions
+            if (this.id == 'spaceship') {
+                this.velocity *=2;
+            }
             this.notify();          
         },
-
-
+        /**
+         * Scale this node and it's descendent bounding boxes
+        **/
+        scaleBoundingBoxRecursive: function(sx, sy) {
+            this.localBoundingBox['x'] *= sx;
+            this.localBoundingBox['y'] *= sy;
+            this.localBoundingBox['w'] *= sx;
+            this.localBoundingBox['h'] *= sy;
+            _.each(this.children, function(child) {
+                child.scaleBoundingBoxRecursive();
+            });
+        },
 
         /** 
           * Check whether a point is within the local bounding box.
@@ -279,18 +294,25 @@ function createSceneGraphModule() {
             }
 
             var p = _.clone(point);
+            var q = [];
             // create inverse matrix and transform the point
-            var inverseGlobal = this.globalTransformation.createInverse();
-            inverseGlobal.transform(point, 0, 0, 1);
 
-            var x = p[0],
-                y = p[1];
+            var inverseGlobal = this.globalTransformation.createInverse();
+            inverseGlobal.transform(p, 0, q, 0, 1);
+
+            var x = q[0],
+                y = q[1];
+
+            console.log(q);
+            console.log(this.localTransformation);
+            console.log(this.id);
 
             if ( this.localBoundingBox['x'] < x  
-                && x < this.localBoundingBox['x'] + this.localBoundingBox['w']
+                && x < (this.localBoundingBox['x'] + this.localBoundingBox['w'])
                 && this.localBoundingBox['y'] < y
                 && y < this.localBoundingBox['y'] + this.localBoundingBox['h']) {
-                return true;
+                console.log('its true');
+                return this;
             } else {
                 return false;
             }
@@ -312,6 +334,7 @@ function createSceneGraphModule() {
             w: 800,
             h: 600
         };
+        this.isInteractableWithMouse = false;
     }
 
     // Inherit all other methods of GraphNode.
@@ -335,6 +358,11 @@ function createSceneGraphModule() {
             w: 130,
             h: 450
         };
+        this.loc = {
+            x: -40,
+            y: -210
+        }
+        this.isInteractableWithMouse = false;
     }
 
     // Inherit all other methods of GraphNode.
@@ -346,7 +374,34 @@ function createSceneGraphModule() {
             context.fillStyle = "white";
             context.rect(dim['x'], dim['y'], dim['w'], dim['h']);
             context.fill();
+        },
+        updateLocation: function(dx, dy) {
+            this.loc['x'] += dx;
+            this.loc['y'] += dy;
+            // TODO/ y axis translate
+            // if (this.loc['x'] < -700) {
+            //     this.translate(700, 0);
+            //     this.loc['x'] = 0;
+            // }
+
+            // if (this.loc['x'] > 700) { 
+            //     this.translate(-700, 0);
+            //     this.loc['x'] = 0;
+            // }
+
+            if (this.loc['y'] < -700) {
+                this.translate(0, 700);
+                this.loc['y'] = 0;
+            }
+
+            if (this.loc['y'] > 700) { 
+                this.translate(0, -700);
+                this.loc['y'] = 0;
+
+            }
+
         }
+
     });
 
 
@@ -509,11 +564,13 @@ function createSceneGraphModule() {
 
 
         this.localBoundingBox = {
-            x: -31,
-            y: -31,
-            w: 49,
-            h: 49
+            x: -43,
+            y: -189,
+            w: 60,
+            h: 230
         };
+        this.isInteractableWithMouse = true;
+
     }
     _.extend(BodyNode.prototype, GraphNode.prototype, {
         renderLocal: function(context) {
@@ -537,11 +594,12 @@ function createSceneGraphModule() {
         GraphNode.apply(this, arguments);
 
         this.localBoundingBox = {
-            x: -61,
-            y: -61,
-            w: 20,
-            h: 20
+            x: -43,
+            y: -192,
+            w: 60,
+            h: 10
         };
+        this.isInteractableWithMouse = true;
     }
     _.extend(HandleNode.prototype, GraphNode.prototype, {
         renderLocal: function(context) {
